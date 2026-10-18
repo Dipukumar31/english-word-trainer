@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2F7D4F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Learn to spell English words with Hindi meanings. For Hindi speakers learning English.">
+<title>English Spelling Trainer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ===== VARIABLES ===== */
+:root{
+  --leaf:#2F7D4F;--leaf-light:#3A9960;
+  --mango:#F4B400;--mango-pale:#FFF6D6;
+  --bg:#FFF8F0;--bg-card:#FFFFFF;
+  --ink:#1B4332;--ink-mid:#4A7C59;--ink-light:#8BAF98;
+  --correct:#2F7D4F;--wrong:#C62828;
+  --correct-bg:#E8F5E9;--wrong-bg:#FFEBEE;
+  --tag-text:#5D4037;--tag-hole:#FFF8F0;
+  --shadow:0 2px 8px rgba(0,0,0,.08);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.12);
+  --r:16px;--rs:10px;
+  --transition:.22s ease;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --leaf:#4CAF50;--leaf-light:#66BB6A;
+    --mango:#FFD54F;--mango-pale:#2D2810;
+    --bg:#0D1B12;--bg-card:#162A1C;
+    --ink:#E8F5E9;--ink-mid:#A5D6A7;--ink-light:#4A7C59;
+    --correct:#66BB6A;--wrong:#EF5350;
+    --correct-bg:#0D2B12;--wrong-bg:#2D1010;
+    --tag-text:#4A3728;--tag-hole:#0D1B12;
+    --shadow:0 2px 8px rgba(0,0,0,.4);
+    --shadow-lg:0 4px 16px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --leaf:#4CAF50;--leaf-light:#66BB6A;
+  --mango:#FFD54F;--mango-pale:#2D2810;
+  --bg:#0D1B12;--bg-card:#162A1C;
+  --ink:#E8F5E9;--ink-mid:#A5D6A7;--ink-light:#4A7C59;
+  --correct:#66BB6A;--wrong:#EF5350;
+  --correct-bg:#0D2B12;--wrong-bg:#2D1010;
+  --tag-text:#4A3728;--tag-hole:#0D1B12;
+  --shadow:0 2px 8px rgba(0,0,0,.4);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.5);
+}
+
+/* ===== BASE ===== */
+html{scroll-behavior:smooth}
+body{
+  font-family:'Baloo 2','Noto Sans Devanagari',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);
+  min-height:100dvh;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+}
+#app{max-width:480px;margin:0 auto;padding:16px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0))}
+
+/* ===== HEADER ===== */
+.app-hdr{text-align:center;padding:12px 0 4px}
+.app-hdr h1{font-size:1.5rem;font-weight:700;color:var(--leaf);line-height:1.3}
+
+/* ===== STREAK ===== */
+.streak{display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;background:var(--mango-pale);border-radius:var(--rs);margin:10px 0;font-weight:600}
+.streak b{font-size:1.3rem;color:var(--mango)}
+
+/* ===== TEST MODE NOTICE ===== */
+.tm-notice{text-align:center;padding:8px;background:var(--mango-pale);
+  border-radius:var(--rs);font-size:.85rem;color:var(--tag-text);margin-bottom:8px}
+
+/* ===== LEVEL LIST ===== */
+.lv-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.lv-card{display:flex;align-items:center;gap:14px;padding:14px 16px;
+  background:var(--bg-card);border-radius:var(--r);box-shadow:var(--shadow);
+  cursor:pointer;transition:transform var(--transition);min-height:64px;border:none;width:100%;
+  text-align:left;font-family:inherit;font-size:1rem;color:var(--ink)}
+.lv-card:active{transform:scale(.98)}
+.lv-card.locked{opacity:.5;cursor:not-allowed;pointer-events:none}
+.lv-badge{width:42px;height:42px;border-radius:50%;background:var(--leaf);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:700;flex-shrink:0}
+.lv-card.locked .lv-badge{background:var(--ink-light)}
+.lv-info{flex:1;min-width:0}
+.lv-name{font-size:1.02rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-meta{font-size:.78rem;color:var(--ink-mid)}
+.lv-score{text-align:right;font-size:.82rem;color:var(--ink-mid);flex-shrink:0}
+.lv-stars{color:var(--mango);font-size:1.05rem;letter-spacing:2px}
+.cleared-tag{display:inline-block;background:var(--correct-bg);color:var(--correct);
+  font-size:.72rem;font-weight:600;padding:1px 8px;border-radius:10px}
+
+/* ===== BACK BUTTON ===== */
+.back{background:none;border:none;font-size:.95rem;color:var(--leaf);cursor:pointer;
+  padding:8px 0;font-family:inherit;display:flex;align-items:center;gap:4px;font-weight:600;min-height:48px}
+
+/* ===== WORD CHIPS ===== */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chip{background:var(--bg-card);border:2px solid var(--leaf);border-radius:20px;
+  padding:5px 13px;font-size:.88rem;font-weight:600;color:var(--ink)}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 24px;border:none;border-radius:var(--rs);font-family:inherit;
+  font-size:1rem;font-weight:600;cursor:pointer;min-height:48px;
+  transition:background var(--transition),transform var(--transition);width:100%}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--leaf);color:#fff}
+.btn-p:hover{background:var(--leaf-light)}
+.btn-s{background:var(--bg-card);color:var(--leaf);border:2px solid var(--leaf)}
+.btn-row{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.btn-icon{background:var(--bg-card);border:2px solid var(--ink-light);border-radius:50%;
+  width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;cursor:pointer;padding:0;flex-shrink:0;transition:transform var(--transition)}
+.btn-icon:active{transform:scale(.92)}
+.btn-sm{width:auto;padding:10px 18px;font-size:.9rem;min-height:44px}
+
+/* ===== PRICE TAG ===== */
+.tag{background:var(--mango);padding:14px 22px 14px 44px;border-radius:6px 14px 14px 6px;
+  position:relative;display:inline-block;font-size:1.65rem;font-weight:700;
+  letter-spacing:.14em;color:var(--tag-text);box-shadow:2px 3px 10px rgba(0,0,0,.12);
+  margin:14px 0;text-transform:uppercase;word-break:break-all;max-width:100%}
+.tag::after{content:'';position:absolute;left:15px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;background:var(--tag-hole);border:2px solid rgba(0,0,0,.12);
+  border-radius:50%;box-shadow:inset 1px 1px 3px rgba(0,0,0,.08)}
+
+/* ===== BLANK TAG ===== */
+.tag-letters{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.tag-l{width:26px;text-align:center;font-size:1.4rem;font-weight:700;
+  border-bottom:3px solid rgba(0,0,0,.25);line-height:1.6;font-family:'Baloo 2',monospace}
+.tag-l.rev{border-bottom-color:var(--leaf);color:var(--tag-text)}
+.tag-l.blank-l{color:rgba(0,0,0,.35)}
+
+/* ===== CARD AREA ===== */
+.card{text-align:center;padding:6px 0}
+.emoji-big{font-size:3.2rem;margin:6px 0;line-height:1.2}
+.hindi{font-size:1.25rem;color:var(--ink-mid);font-family:'Noto Sans Devanagari','Baloo 2',system-ui;margin:2px 0}
+.lcnt{font-size:.92rem;color:var(--ink-light);margin:2px 0}
+.speak-row{display:flex;gap:12px;justify-content:center;margin:10px 0}
+
+/* ===== TIP & EXAMPLE ===== */
+.tip{display:flex;align-items:flex-start;gap:8px;background:var(--mango-pale);
+  border-radius:var(--rs);padding:10px 14px;margin:10px 0;text-align:left;font-size:.9rem;line-height:1.4}
+.ex{display:flex;align-items:center;gap:8px;background:var(--bg-card);border-radius:var(--rs);
+  padding:10px 14px;margin:8px 0;font-size:.92rem;font-style:italic;color:var(--ink-mid);
+  border:1px solid var(--ink-light);text-align:left;line-height:1.4}
+.ex .btn-icon{width:38px;height:38px;font-size:1rem;flex-shrink:0}
+
+/* ===== INPUT ===== */
+.inp-area{margin:14px 0}
+.inp{width:100%;padding:14px 16px;font-family:inherit;font-size:1.15rem;font-weight:600;
+  text-align:center;border:3px solid var(--ink-light);border-radius:var(--rs);
+  background:var(--bg-card);color:var(--ink);outline:none;transition:border-color var(--transition)}
+.inp:focus{border-color:var(--leaf)}
+.inp.shake{border-color:var(--wrong);animation:shake .4s}
+.copy-hint{color:var(--wrong);font-size:.88rem;text-align:center;margin-top:6px;min-height:1.4em}
+
+/* ===== FEEDBACK ===== */
+.fb{border-radius:var(--r);padding:18px;margin:14px 0;text-align:center}
+.fb-ok{background:var(--correct-bg);border:2px solid var(--correct)}
+.fb-no{background:var(--wrong-bg);border:2px solid var(--wrong)}
+.fb h3{font-size:1.25rem;margin-bottom:10px}
+.fb-ok h3{color:var(--correct)}
+.fb-no h3{color:var(--wrong)}
+.cmp{font-size:1.15rem;letter-spacing:.08em;margin:6px 0}
+.ch-ok{color:var(--correct);font-weight:700}
+.ch-bad{color:var(--wrong);font-weight:700;text-decoration:line-through}
+
+/* ===== PROGRESS ===== */
+.prog{height:6px;background:var(--ink-light);border-radius:3px;overflow:hidden;margin:10px 0 2px;opacity:.6}
+.prog-fill{height:100%;background:var(--leaf);border-radius:3px;transition:width .3s ease}
+.prog-txt{font-size:.78rem;color:var(--ink-mid);text-align:center}
+
+/* ===== RESULTS ===== */
+.res-score{font-size:3rem;font-weight:800;color:var(--leaf);text-align:center}
+.res-stars{text-align:center;font-size:1.8rem;margin:6px 0;letter-spacing:4px}
+.res-msg{text-align:center;font-size:.95rem;color:var(--ink-mid);margin:6px 0 14px}
+.wr-list{display:flex;flex-direction:column;gap:5px;margin:14px 0}
+.wr-row{display:flex;align-items:center;gap:10px;padding:8px 12px;
+  background:var(--bg-card);border-radius:var(--rs);font-size:.92rem}
+.wr-ico{font-size:1.05rem;flex-shrink:0}
+.wr-word{font-weight:600;flex:1}
+.wr-hi{color:var(--ink-mid);font-size:.82rem}
+
+/* ===== MODAL ===== */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;
+  justify-content:center;z-index:100;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-ov.vis{opacity:1;pointer-events:auto}
+.modal-box{background:var(--bg-card);border-radius:var(--r);padding:24px;max-width:340px;
+  width:100%;box-shadow:var(--shadow-lg)}
+.modal-t{font-size:1.15rem;font-weight:700;margin-bottom:6px}
+.modal-b{font-size:.92rem;color:var(--ink-mid);margin-bottom:14px;line-height:1.4}
+.modal-acts{display:flex;gap:10px}
+.modal-acts .btn{flex:1;padding:10px 14px;font-size:.9rem}
+
+/* ===== LINKS ===== */
+.skip{display:block;text-align:center;margin-top:8px;color:var(--ink-light);font-size:.85rem;
+  cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;
+  padding:10px;min-height:48px}
+.reset-sec{text-align:center;margin-top:22px;padding-top:14px;border-top:1px solid var(--ink-light)}
+.reset-sec button{background:none;border:none;color:var(--ink-mid);font-family:inherit;
+  font-size:.85rem;text-decoration:underline;cursor:pointer;padding:10px;min-height:48px}
+
+/* ===== SCREEN ENTER ===== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.scr{animation:fadeUp .25s ease-out}
+
+/* ===== SHAKE ===== */
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* ===== REDUCED MOTION ===== */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-ov" class="modal-ov"></div>
+
+<script>
+'use strict';
+
+/* ========== CONSTANTS ========== */
+var TEST_UNLOCK_ALL = false;
+var MAX_RETRIES = 2;
+var STORAGE_KEY = 'spell-trainer-v1';
+
+/* ========== LETTER NAMES (for Spell It) ========== */
+var LETTER_NAMES = {
+  a:'ay',b:'bee',c:'see',d:'dee',e:'ee',f:'eff',g:'jee',h:'aitch',
+  i:'eye',j:'jay',k:'kay',l:'ell',m:'em',n:'en',o:'oh',p:'pee',
+  q:'kew',r:'ar',s:'ess',t:'tee',u:'you',v:'vee',w:'double you',
+  x:'ex',y:'why',z:'zed'
+};
+
+/* ========== WORD DATA — 10 LEVELS ========== */
+var LEVELS = [
+  { num:1, name:'First Words', icon:'\u{1F4DD}', words:[
+    {w:'bag',h:'बैग',e:'\u{1F6CD}️',tip:'Rhymes with "tag"',ex:'Put the fruits in a bag.'},
+    {w:'box',h:'डिब्बा',e:'\u{1F4E6}',tip:'Ends with the letter X',ex:'This box has ten oranges.'},
+    {w:'cup',h:'कप',e:'☕',tip:'Rhymes with "up"',ex:'Give me a cup of tea.'},
+    {w:'pen',h:'पेन',e:'\u{1F58A}️',tip:'Rhymes with "hen"',ex:'Write the bill with a pen.'},
+    {w:'egg',h:'अंडा',e:'\u{1F95A}',tip:'Double G at the end',ex:'One egg costs eight rupees.'},
+    {w:'key',h:'चाबी',e:'\u{1F511}',tip:'E-Y makes the "ee" sound',ex:'Lock the shop with the key.'},
+    {w:'bus',h:'बस',e:'\u{1F68C}',tip:'Just three letters: B-U-S',ex:'The bus stops near the shop.'},
+    {w:'jar',h:'मर्तबान',e:'\u{1FAD9}',tip:'Rhymes with "car"',ex:'Keep the pickles in a jar.'}
+  ]},
+  { num:2, name:'Shop Words', icon:'\u{1F3EA}', words:[
+    {w:'bill',h:'बिल',e:'\u{1F9FE}',tip:'Double L at the end',ex:'Here is your bill.'},
+    {w:'cash',h:'नकद',e:'\u{1F4B5}',tip:'Ends with SH sound',ex:'I will pay by cash.'},
+    {w:'shop',h:'दुकान',e:'\u{1F3EA}',tip:'Starts with SH sound',ex:'Our shop has fresh fruits.'},
+    {w:'sell',h:'बेचना',e:'\u{1F3F7}️',tip:'Double L, rhymes with "bell"',ex:'We sell fruits and vegetables.'},
+    {w:'pack',h:'पैक',e:'\u{1F4E6}',tip:'Ends with CK together',ex:'Pack these mangoes carefully.'},
+    {w:'cost',h:'कीमत',e:'\u{1F4B0}',tip:'Rhymes with "lost"',ex:'How much does this cost?'},
+    {w:'cart',h:'ठेला',e:'\u{1F6D2}',tip:'Starts with C, not K',ex:'Add it to the cart.'},
+    {w:'rate',h:'दर',e:'\u{1F4CA}',tip:'Silent E at the end',ex:'What is the rate today?'}
+  ]},
+  { num:3, name:'Fruits', icon:'\u{1F34E}', words:[
+    {w:'apple',h:'सेब',e:'\u{1F34E}',tip:'Double P in the middle',ex:'Red apples are very sweet.'},
+    {w:'grape',h:'अंगूर',e:'\u{1F347}',tip:'Silent E at the end',ex:'Buy one kilo of grapes.'},
+    {w:'lemon',h:'नींबू',e:'\u{1F34B}',tip:'Ends with O-N, not U-N',ex:'Squeeze the lemon on it.'},
+    {w:'mango',h:'आम',e:'\u{1F96D}',tip:'Ends with G-O together',ex:'Mango is the king of fruits.'},
+    {w:'guava',h:'अमरूद',e:'\u{1F350}',tip:'Starts with G-U, not just G',ex:'Ripe guava smells so sweet.'},
+    {w:'melon',h:'तरबूज',e:'\u{1F348}',tip:'Same ending as "lemon"',ex:'Cut the melon into slices.'},
+    {w:'peach',h:'आड़ू',e:'\u{1F351}',tip:'EA together, ends with CH',ex:'This peach is soft and juicy.'},
+    {w:'berry',h:'बेरी',e:'\u{1FAD0}',tip:'Double R, ends with Y',ex:'Fresh berries are in season.'}
+  ]},
+  { num:4, name:'Vegetables', icon:'\u{1F966}', words:[
+    {w:'onion',h:'प्याज',e:'\u{1F9C5}',tip:'O-N-I-O-N — O appears twice',ex:'Onion price went up today.'},
+    {w:'potato',h:'आलू',e:'\u{1F954}',tip:'P-O-T-A-T-O — T appears twice',ex:'Potato is very cheap today.'},
+    {w:'tomato',h:'टमाटर',e:'\u{1F345}',tip:'Ends with T-O, like potato!',ex:'Red tomatoes are the best.'},
+    {w:'carrot',h:'गाजर',e:'\u{1F955}',tip:'Double R in the middle',ex:'Carrot juice is very healthy.'},
+    {w:'ginger',h:'अदरक',e:'\u{1FAD1}',tip:'G appears twice: G-I-N-G-E-R',ex:'Add ginger to make chai.'},
+    {w:'garlic',h:'लहसुन',e:'\u{1F9C4}',tip:'G-A-R-L-I-C, ends with C',ex:'Garlic is good for health.'},
+    {w:'beans',h:'सेम',e:'\u{1FAD8}',tip:'EA together, S at the end',ex:'Fresh beans came this morning.'},
+    {w:'peas',h:'मटर',e:'\u{1F7E2}',tip:'EA together, just four letters',ex:'Green peas taste so sweet.'}
+  ]},
+  { num:5, name:'Money & Numbers', icon:'\u{1F4B0}', words:[
+    {w:'price',h:'दाम',e:'\u{1F4B0}',tip:'Silent E, I-C-E like "rice"',ex:'What is the price of this?'},
+    {w:'total',h:'कुल जोड़',e:'➕',tip:'T appears twice: T-O-T-A-L',ex:'Your total is three hundred.'},
+    {w:'money',h:'पैसा',e:'\u{1F4B5}',tip:'O-N-E-Y, not U-N-I',ex:'Count the money carefully.'},
+    {w:'change',h:'छुट्टा',e:'\u{1FA99}',tip:'Silent E, starts with CH',ex:'Do you have change for hundred?'},
+    {w:'dozen',h:'दर्जन',e:'\u{1F522}',tip:'D-O-Z-E-N — Z in the middle',ex:'One dozen bananas please.'},
+    {w:'weight',h:'वज़न',e:'⚖️',tip:'W-E-I-G-H-T — GH is silent!',ex:'Check the weight of these apples.'},
+    {w:'cheap',h:'सस्ता',e:'\u{1F3F7}️',tip:'CH at start, EA together',ex:'Oranges are cheap this week.'},
+    {w:'extra',h:'अतिरिक्त',e:'➕',tip:'Starts with E-X together',ex:'Give me one extra mango.'}
+  ]},
+  { num:6, name:'Colours & Size', icon:'\u{1F3A8}', words:[
+    {w:'green',h:'हरा',e:'\u{1F49A}',tip:'Double E in the middle',ex:'Raw bananas are green.'},
+    {w:'yellow',h:'पीला',e:'\u{1F49B}',tip:'Y-E-L-L-O-W — double L',ex:'Ripe mangoes turn yellow.'},
+    {w:'white',h:'सफ़ेद',e:'\u{1F90D}',tip:'Starts with WH, silent E',ex:'White sugar is in that jar.'},
+    {w:'brown',h:'भूरा',e:'\u{1F90E}',tip:'B-R-O-W-N, OW like "how"',ex:'Brown rice is healthier.'},
+    {w:'small',h:'छोटा',e:'\u{1F90F}',tip:'Double L at the end',ex:'Give me the small packet.'},
+    {w:'large',h:'बड़ा',e:'\u{1F4CF}',tip:'Silent E at the end',ex:'Do you have a large box?'},
+    {w:'fresh',h:'ताज़ा',e:'\u{1F33F}',tip:'F-R-E-S-H, ends with SH',ex:'All our fruits are fresh.'},
+    {w:'sweet',h:'मीठा',e:'\u{1F36F}',tip:'Double E, rhymes with "feet"',ex:'This mango is very sweet.'}
+  ]},
+  { num:7, name:'Days & Time', icon:'\u{1F4C5}', words:[
+    {w:'today',h:'आज',e:'\u{1F4C5}',tip:'"To" plus "day" = today',ex:'The shop is open today.'},
+    {w:'morning',h:'सुबह',e:'\u{1F305}',tip:'Ends with N-I-N-G',ex:'Fresh stock comes every morning.'},
+    {w:'night',h:'रात',e:'\u{1F319}',tip:'N-I-G-H-T — GH is silent!',ex:'We close at nine at night.'},
+    {w:'Sunday',h:'रविवार',e:'☀️',tip:'"Sun" plus "day" = Sunday',ex:'Shop is closed on Sunday.'},
+    {w:'Monday',h:'सोमवार',e:'\u{1F4C6}',tip:'"Mon" plus "day" = Monday',ex:'New fruits come on Monday.'},
+    {w:'early',h:'जल्दी',e:'⏰',tip:'Starts with EAR, ends with LY',ex:'Come early for fresh stock.'},
+    {w:'minute',h:'मिनट',e:'⏱️',tip:'Silent E at the end',ex:'Please wait one minute.'},
+    {w:'month',h:'महीना',e:'\u{1F5D3}️',tip:'M-O-N-T-H, ends with TH',ex:'We sell a lot every month.'}
+  ]},
+  { num:8, name:'Doing Words', icon:'\u{1F3C3}', words:[
+    {w:'bring',h:'लाना',e:'\u{1F932}',tip:'Ends with I-N-G',ex:'Please bring the basket here.'},
+    {w:'carry',h:'उठाना',e:'\u{1F4AA}',tip:'Double R, ends with Y',ex:'I will carry the heavy bags.'},
+    {w:'count',h:'गिनना',e:'\u{1F522}',tip:'C-O-U-N-T, OU like "out"',ex:'Count these oranges for me.'},
+    {w:'clean',h:'साफ़',e:'✨',tip:'CL together, EA together',ex:'Keep the shop very clean.'},
+    {w:'close',h:'बंद करना',e:'\u{1F6AA}',tip:'Silent E at the end',ex:'Close the shop at eight.'},
+    {w:'check',h:'जाँचना',e:'✅',tip:'Starts with CH, ends with CK',ex:'Check if the mango is ripe.'},
+    {w:'paint',h:'पेंट',e:'\u{1F3A8}',tip:'P-A-I-N-T — not P-E-N-T!',ex:'We need to paint the shop wall.'},
+    {w:'write',h:'लिखना',e:'✍️',tip:'Silent W at the start!',ex:'Write the order on paper.'}
+  ]},
+  { num:9, name:'Kitchen Words', icon:'\u{1F37D}️', words:[
+    {w:'knife',h:'चाकू',e:'\u{1F52A}',tip:'Silent K at the start! K-N-I-F-E',ex:'Use a clean knife to cut fruit.'},
+    {w:'plate',h:'प्लेट',e:'\u{1F37D}️',tip:'Silent E at the end',ex:'Put the food on a plate.'},
+    {w:'glass',h:'गिलास',e:'\u{1F95B}',tip:'Double S at the end',ex:'Pour water in the glass.'},
+    {w:'spoon',h:'चम्मच',e:'\u{1F944}',tip:'Double O in the middle',ex:'Stir the sugar with a spoon.'},
+    {w:'sugar',h:'चीनी',e:'\u{1F36C}',tip:'S-U-G-A-R, ends with AR',ex:'Add one spoon of sugar.'},
+    {w:'water',h:'पानी',e:'\u{1F4A7}',tip:'W-A-T-E-R, ends with ER',ex:'Drink cold water in summer.'},
+    {w:'flour',h:'आटा',e:'\u{1F33E}',tip:'F-L-O-U-R — sounds like "flower"!',ex:'Buy five kilos of flour.'},
+    {w:'stove',h:'चूल्हा',e:'\u{1F525}',tip:'Starts with ST, silent E',ex:'Heat the water on the stove.'}
+  ]},
+  { num:10, name:'Business Words', icon:'\u{1F4BC}', words:[
+    {w:'receipt',h:'रसीद',e:'\u{1F9FE}',tip:'Silent P! R-E-C-E-I-P-T',ex:'Always keep the receipt safe.'},
+    {w:'invoice',h:'बीजक',e:'\u{1F4C4}',tip:'Starts with IN, silent E at end',ex:'Print the invoice for the order.'},
+    {w:'delivery',h:'डिलीवरी',e:'\u{1F69A}',tip:'D-E-L-I-V-E-R-Y — eight letters',ex:'Free delivery over five hundred.'},
+    {w:'customer',h:'ग्राहक',e:'\u{1F464}',tip:'C-U-S-T-O-M-E-R, ends with ER',ex:'The customer is always right.'},
+    {w:'discount',h:'छूट',e:'\u{1F3F7}️',tip:'D-I-S-C-O-U-N-T, starts with DIS',ex:'Ten percent discount today.'},
+    {w:'quality',h:'गुणवत्ता',e:'⭐',tip:'Q-U-A-L-I-T-Y — Q always needs U',ex:'We sell best quality fruits.'},
+    {w:'address',h:'पता',e:'\u{1F4CD}',tip:'Double D! A-D-D-R-E-S-S',ex:'Write the delivery address clearly.'},
+    {w:'payment',h:'भुगतान',e:'\u{1F4B3}',tip:'PAY plus MENT = payment',ex:'Cash or online payment?'}
+  ]}
+];
+
+/* ========== STATE ========== */
+var state;
+
+function loadState() {
+  try {
+    var s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && Array.isArray(s.cleared)) return s;
+  } catch(e) {}
+  return { cleared:[], scores:{}, streak:{ count:0, lastDate:null } };
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function openLevels() {
+  if (TEST_UNLOCK_ALL) return 10;
+  return Math.min(10, 3 + state.cleared.length);
+}
+
+function updateStreak() {
+  var today = indiaDate();
+  if (state.streak.lastDate === today) return;
+  var yesterday = indiaDate(-1);
+  if (state.streak.lastDate === yesterday) {
+    state.streak.count++;
+  } else {
+    state.streak.count = 1;
+  }
+  state.streak.lastDate = today;
+  saveState();
+}
+
+function indiaDate(offset) {
+  var d = new Date();
+  d.setMinutes(d.getMinutes() + 330 - d.getTimezoneOffset()); // IST = UTC+5:30
+  if (offset) d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0,10);
+}
+
+/* ========== SPEECH ========== */
+var speechOK = ('speechSynthesis' in window);
+
+function speak(text, rate) {
+  try {
+    if (!speechOK) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = rate || 1;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}
+
+function spellOut(word) {
+  var names = word.toLowerCase().split('').map(function(c) { return LETTER_NAMES[c] || c; });
+  speak(names.join(', '), 0.75);
+}
+
+/* ========== HELPERS ========== */
+function $(sel) { return document.querySelector(sel); }
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function scrollTop() { window.scrollTo({ top:0, behavior:'auto' }); }
+
+/* ========== MODAL ========== */
+function showModal(title, body, actions) {
+  var m = $('#modal-ov');
+  var html = '<div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="mt">' +
+    '<div class="modal-t" id="mt">' + escH(title) + '</div>' +
+    '<div class="modal-b">' + escH(body) + '</div>' +
+    '<div class="modal-acts">';
+  actions.forEach(function(a, i) {
+    html += '<button class="btn ' + (a.primary ? 'btn-p' : 'btn-s') + '" data-mi="' + i + '">' + escH(a.label) + '</button>';
+  });
+  html += '</div></div>';
+  m.innerHTML = html;
+  m.classList.add('vis');
+  // Wire up buttons
+  m.querySelectorAll('[data-mi]').forEach(function(btn) {
+    btn.onclick = function() {
+      hideModal();
+      var idx = parseInt(btn.getAttribute('data-mi'));
+      if (actions[idx] && actions[idx].fn) actions[idx].fn();
+    };
+  });
+  m.onclick = function(e) { if (e.target === m) hideModal(); };
+  var first = m.querySelector('button');
+  if (first) first.focus();
+}
+
+function hideModal() { $('#modal-ov').classList.remove('vis'); }
+
+/* ========== PRICE TAG HTML ========== */
+function tagHTML(word) {
+  return '<div class="tag">' + escH(word.toUpperCase()) + '</div>';
+}
+
+function blanksHTML(word, revealed) {
+  var html = '<div class="tag-letters">';
+  for (var i = 0; i < word.length; i++) {
+    if (revealed.indexOf(i) >= 0) {
+      html += '<span class="tag-l rev">' + escH(word[i].toUpperCase()) + '</span>';
+    } else {
+      html += '<span class="tag-l blank-l">_</span>';
+    }
+  }
+  return html + '</div>';
+}
+
+function compareHTML(typed, correct) {
+  var html = '';
+  for (var i = 0; i < typed.length; i++) {
+    if (i < correct.length && typed[i].toLowerCase() === correct[i].toLowerCase()) {
+      html += '<span class="ch-ok">' + escH(typed[i]) + '</span>';
+    } else {
+      html += '<span class="ch-bad">' + escH(typed[i]) + '</span>';
+    }
+  }
+  return html;
+}
+
+function starsHTML(score) {
+  var n = score >= 90 ? 3 : score >= 80 ? 2 : 1;
+  return '⭐'.repeat(n) + '☆'.repeat(3 - n);
+}
+
+function starsCount(score) { return score >= 90 ? 3 : score >= 80 ? 2 : 1; }
+
+/* ========== HOME SCREEN ========== */
+function showHome() {
+  state = loadState();
+  var open = openLevels();
+  var h = '<div class="scr"><div class="app-hdr"><h1>\u{1F343} English Spelling Trainer</h1></div>';
+
+  if (TEST_UNLOCK_ALL) {
+    h += '<div class="tm-notice">\u{1F527} Test mode: all levels are open.</div>';
+  }
+
+  if (state.streak.count > 0) {
+    h += '<div class="streak"><span>\u{1F525}</span><b>' + state.streak.count + '</b>' +
+      '<span>' + (state.streak.count === 1 ? 'day' : 'days') + ' streak</span></div>';
+  }
+
+  h += '<div class="lv-list">';
+  LEVELS.forEach(function(lv) {
+    var isOpen = lv.num <= open;
+    var sc = state.scores[lv.num];
+    var clr = state.cleared.indexOf(lv.num) >= 0;
+    h += '<button class="lv-card' + (isOpen ? '' : ' locked') + '" ' +
+      (isOpen ? 'onclick="showLevel(' + lv.num + ')"' : 'disabled') +
+      ' aria-label="Level ' + lv.num + ': ' + lv.name + (isOpen ? '' : ' (locked)') + '">' +
+      '<div class="lv-badge">' + (isOpen ? lv.num : '\u{1F512}') + '</div>' +
+      '<div class="lv-info"><div class="lv-name">' + lv.icon + ' ' + escH(lv.name) + '</div>' +
+      '<div class="lv-meta">' + lv.words.length + ' words' + (clr ? ' · <span class="cleared-tag">Cleared</span>' : '') + '</div></div>' +
+      '<div class="lv-score">';
+    if (sc != null) {
+      h += '<div class="lv-stars">' + starsHTML(sc) + '</div><div>' + sc + '%</div>';
+    } else if (isOpen) {
+      h += '<div style="color:var(--ink-light)">—</div>';
+    }
+    h += '</div></button>';
+  });
+  h += '</div>';
+
+  h += '<div class="reset-sec"><button onclick="confirmReset()">Reset my progress</button></div>';
+  h += '</div>';
+  $('#app').innerHTML = h;
+  scrollTop();
+}
+
+function confirmReset() {
+  showModal('Reset progress?',
+    'This will erase all your scores, stars, and streak. You cannot undo this.',
+    [
+      { label:'Cancel', primary:false },
+      { label:'Reset', primary:true, fn:function() {
+        state = { cleared:[], scores:{}, streak:{ count:0, lastDate:null } };
+        saveState();
+        showHome();
+      }}
+    ]);
+}
+
+/* ========== LEVEL DETAIL ========== */
+function showLevel(num) {
+  var lv = LEVELS[num - 1];
+  if (!lv) return;
+  var sc = state.scores[num];
+  var fresh = (sc == null);
+
+  var h = '<div class="scr">' +
+    '<button class="back" onclick="showHome()">← Back to levels</button>' +
+    '<h2 style="margin:6px 0">' + lv.icon + ' Level ' + lv.num + ': ' + escH(lv.name) + '</h2>';
+
+  if (sc != null) {
+    h += '<div style="margin:4px 0;font-size:.9rem;color:var(--ink-mid)">Best score: ' + sc + '% ' + starsHTML(sc) + '</div>';
+  }
+
+  h += '<div class="chips">';
+  lv.words.forEach(function(w) { h += '<span class="chip">' + w.e + ' ' + escH(w.w) + '</span>'; });
+  h += '</div>';
+
+  h += '<div class="btn-row">' +
+    '<button class="btn ' + (fresh ? 'btn-p' : 'btn-s') + '" onclick="startStudy(' + num + ')">\u{1F4D6} Study the words</button>' +
+    '<button class="btn ' + (fresh ? 'btn-s' : 'btn-p') + '" onclick="startTest(' + num + ')">\u{1F4DD} Take the test</button>' +
+    '</div></div>';
+
+  $('#app').innerHTML = h;
+  scrollTop();
+}
+
+/* ========== STUDY MODE ========== */
+function startStudy(levelNum) {
+  var lv = LEVELS[levelNum - 1];
+  var words = lv.words;
+  var idx = 0;
+
+  function show() {
+    if (idx >= words.length) { showStudyDone(levelNum); return; }
+    var w = words[idx];
+    var pct = Math.round((idx / words.length) * 100);
+
+    var h = '<div class="scr">' +
+      '<button class="back" onclick="showLevel(' + levelNum + ')">← Back</button>' +
+      '<div class="prog"><div class="prog-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="prog-txt">Word ' + (idx + 1) + ' of ' + words.length + '</div>' +
+      '<div class="card">' +
+      '<div class="emoji-big">' + w.e + '</div>' +
+      '<div class="hindi">' + escH(w.h) + '</div>' +
+      tagHTML(w.w) +
+      '<div class="speak-row">' +
+      '<button class="btn-icon" data-speak="' + escH(w.w) + '" aria-label="Hear the word" title="Word">\u{1F50A}</button>' +
+      '<button class="btn-icon" data-spell="' + escH(w.w) + '" aria-label="Spell it out" title="Spell it">\u{1F524}</button>' +
+      '</div>' +
+      '<div class="tip">\u{1F4A1} ' + escH(w.tip) + '</div>' +
+      '<div class="ex"><span>“' + escH(w.ex) + '”</span>' +
+      '<button class="btn-icon" data-speak="' + escH(w.ex) + '" aria-label="Hear the sentence">\u{1F50A}</button></div>' +
+      '<div class="inp-area">' +
+      '<input type="text" class="inp" id="si" placeholder="Type the word here…" ' +
+      'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
+      '<div class="copy-hint" id="sh"></div></div>' +
+      '<button class="skip" id="sk">Skip this word</button>' +
+      '</div></div>';
+
+    $('#app').innerHTML = h;
+    var inp = $('#si');
+    var hint = $('#sh');
+    var done = false;
+
+    inp.addEventListener('input', function() {
+      if (done) return;
+      var v = inp.value.trim();
+      if (v.toLowerCase() === w.w.toLowerCase()) {
+        done = true;
+        inp.style.borderColor = 'var(--correct)';
+        hint.style.color = 'var(--correct)';
+        hint.textContent = '✓ Correct!';
+        setTimeout(function() { idx++; show(); }, 700);
+      } else if (v.length >= w.w.length) {
+        hint.textContent = 'Not the same yet. Look at the word above and copy it letter by letter.';
+      } else {
+        hint.textContent = '';
+      }
+    });
+
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !done) {
+        var v = inp.value.trim();
+        if (v.toLowerCase() !== w.w.toLowerCase()) {
+          hint.textContent = 'Not the same yet. Look at the word above and copy it letter by letter.';
+          inp.classList.add('shake');
+          setTimeout(function() { inp.classList.remove('shake'); }, 450);
+        }
+      }
+    });
+
+    $('#sk').onclick = function() { idx++; show(); };
+
+    inp.focus();
+    scrollTop();
+  }
+
+  show();
+}
+
+function showStudyDone(levelNum) {
+  updateStreak();
+  var h = '<div class="scr"><div class="card">' +
+    '<div class="emoji-big">\u{1F389}</div>' +
+    '<h2>Study complete!</h2>' +
+    '<p style="color:var(--ink-mid);margin:8px 0">Great job reviewing these words.</p>' +
+    '<div class="btn-row" style="margin-top:20px">' +
+    '<button class="btn btn-p" onclick="startTest(' + levelNum + ')">\u{1F4DD} Take the test</button>' +
+    '<button class="btn btn-s" onclick="startStudy(' + levelNum + ')">\u{1F4D6} Study again</button>' +
+    '<button class="btn btn-s" onclick="showHome()">← Back to levels</button>' +
+    '</div></div></div>';
+  $('#app').innerHTML = h;
+  scrollTop();
+}
+
+/* ========== TEST MODE ========== */
+function startTest(levelNum) {
+  var lv = LEVELS[levelNum - 1];
+  var allWords = lv.words;
+  var queue = shuffle(allWords.slice());
+  var idx = 0;
+  var firstTryClean = {};
+  var seen = {};
+  var retries = {};
+  var total = allWords.length;
+  var seenCount = 0;
+  var currentHinted = false;
+  var revealed = [];
+
+  function showWord() {
+    if (idx >= queue.length) { finish(); return; }
+    var w = queue[idx];
+    currentHinted = false;
+    revealed = [];
+    if (!seen[w.w]) seenCount++;
+    var progPct = Math.round((Math.min(seenCount, total) / total) * 100);
+
+    var h = '<div class="scr">' +
+      '<button class="back" id="qt">← Quit test</button>' +
+      '<div class="prog"><div class="prog-fill" style="width:' + progPct + '%"></div></div>' +
+      '<div class="prog-txt">Word ' + Math.min(seenCount, total) + ' of ' + total + '</div>' +
+      '<div class="card">' +
+      '<div class="emoji-big">' + w.e + '</div>' +
+      '<div class="hindi">' + escH(w.h) + '</div>' +
+      '<div class="lcnt">' + w.w.length + ' letters</div>' +
+      '<button class="btn-icon" id="tl" aria-label="Listen to the word" style="margin:8px auto">\u{1F50A}</button>' +
+      '<div class="tag" id="tb">' + blanksHTML(w.w, []) + '</div>' +
+      '<div class="inp-area">' +
+      '<input type="text" class="inp" id="ti" placeholder="Type the spelling…" ' +
+      'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:12px">' +
+      '<button class="btn btn-s" id="th" style="flex:1">\u{1F4A1} Hint</button>' +
+      '<button class="btn btn-p" id="tc" style="flex:1">Check ✓</button>' +
+      '</div></div></div>';
+
+    $('#app').innerHTML = h;
+
+    $('#qt').onclick = function() { quitTest(); };
+    $('#tl').onclick = function() { speak(w.w); };
+    $('#th').onclick = function() { giveHint(w); };
+    $('#tc').onclick = function() { check(w); };
+    $('#ti').addEventListener('keydown', function(e) { if (e.key === 'Enter') check(w); });
+
+    $('#ti').focus();
+    setTimeout(function() { speak(w.w); }, 300);
+    scrollTop();
+  }
+
+  function giveHint(w) {
+    currentHinted = true;
+    for (var i = 0; i < w.w.length; i++) {
+      if (revealed.indexOf(i) < 0) { revealed.push(i); break; }
+    }
+    var tb = $('#tb');
+    if (tb) tb.innerHTML = blanksHTML(w.w, revealed);
+    if (revealed.length >= w.w.length) {
+      var hb = $('#th');
+      if (hb) { hb.disabled = true; hb.style.opacity = '.5'; }
+    }
+  }
+
+  function check(w) {
+    var inp = $('#ti');
+    var val = inp ? inp.value.trim() : '';
+    if (!val) { if (inp) inp.focus(); return; }
+
+    var correct = val.toLowerCase() === w.w.toLowerCase();
+    var isFirst = !seen[w.w];
+    seen[w.w] = true;
+
+    if (correct && !currentHinted) {
+      if (isFirst) firstTryClean[w.w] = true;
+      showOK(w);
+    } else if (correct && currentHinted) {
+      var rc = retries[w.w] || 0;
+      if (rc < MAX_RETRIES) { retries[w.w] = rc + 1; queue.push(w); }
+      showOK(w);
+    } else {
+      var rc2 = retries[w.w] || 0;
+      if (rc2 < MAX_RETRIES) { retries[w.w] = rc2 + 1; queue.push(w); }
+      showNO(w, val);
+    }
+  }
+
+  function showOK(w) {
+    var h = '<div class="scr"><div class="card">' +
+      '<div class="fb fb-ok"><h3>✅ Correct!</h3>' + tagHTML(w.w) + '</div>' +
+      '<div class="tip">\u{1F4A1} ' + escH(w.tip) + '</div>' +
+      '<div class="ex"><span>“' + escH(w.ex) + '”</span>' +
+      '<button class="btn-icon" data-speak="' + escH(w.ex) + '" aria-label="Hear sentence">\u{1F50A}</button></div>' +
+      '<div class="speak-row" style="margin:10px 0">' +
+      '<button class="btn-icon" data-spell="' + escH(w.w) + '" aria-label="Spell it" title="Spell it">\u{1F524}</button></div>' +
+      '<button class="btn btn-p" id="nx" style="margin-top:12px">Next →</button>' +
+      '</div></div>';
+    $('#app').innerHTML = h;
+    $('#nx').onclick = function() { idx++; showWord(); };
+    scrollTop();
+  }
+
+  function showNO(w, typed) {
+    var comp = compareHTML(typed, w.w);
+    var h = '<div class="scr"><div class="card">' +
+      '<div class="fb fb-no"><h3>❌ Not quite</h3>' +
+      '<div style="margin:10px 0"><div style="font-size:.88rem;color:var(--ink-mid)">You wrote:</div>' +
+      '<div class="cmp">' + comp + '</div></div>' +
+      '<div style="margin:10px 0"><div style="font-size:.88rem;color:var(--ink-mid)">Correct spelling:</div>' +
+      tagHTML(w.w) + '</div></div>' +
+      '<button class="btn btn-p" id="nx" style="margin-top:12px">Next →</button>' +
+      '</div></div>';
+    $('#app').innerHTML = h;
+    $('#nx').onclick = function() { idx++; showWord(); };
+    scrollTop();
+  }
+
+  function quitTest() {
+    showModal('Quit the test?',
+      'Your progress on this test will be lost.',
+      [
+        { label:'Continue', primary:true },
+        { label:'Quit', primary:false, fn:function() { showLevel(levelNum); } }
+      ]);
+  }
+
+  function finish() {
+    updateStreak();
+    var correctCount = 0;
+    allWords.forEach(function(w) { if (firstTryClean[w.w]) correctCount++; });
+    var score = Math.round((correctCount / total) * 100);
+
+    if (state.scores[levelNum] == null || score > state.scores[levelNum]) {
+      state.scores[levelNum] = score;
+    }
+    if (score >= 80 && state.cleared.indexOf(levelNum) < 0) {
+      state.cleared.push(levelNum);
+    }
+    saveState();
+
+    var stars = starsCount(score);
+    var cleared = score >= 80;
+
+    var h = '<div class="scr"><div class="card">' +
+      '<div class="emoji-big">' + (cleared ? '\u{1F3C6}' : '\u{1F4AA}') + '</div>' +
+      '<div class="res-score">' + score + '%</div>' +
+      '<div class="res-stars">' + starsHTML(score) + '</div>' +
+      '<div class="res-msg">' +
+      (cleared ? 'Level ' + levelNum + ' cleared! ' + (levelNum < 10 ? 'Level ' + (openLevels()) + ' is now open.' : 'All levels done!') :
+        'Keep practicing! You need 80% to clear this level.') +
+      '</div>' +
+      '<div class="wr-list">';
+
+    allWords.forEach(function(w) {
+      var pass = !!firstTryClean[w.w];
+      h += '<div class="wr-row"><span class="wr-ico">' + (pass ? '✅' : '❌') + '</span>' +
+        '<span class="wr-word">' + w.e + ' ' + escH(w.w) + '</span>' +
+        '<span class="wr-hi">' + escH(w.h) + '</span></div>';
+    });
+
+    h += '</div><div class="btn-row" style="margin-top:16px">' +
+      '<button class="btn btn-p" onclick="startTest(' + levelNum + ')">\u{1F504} Try again</button>' +
+      '<button class="btn btn-s" onclick="startStudy(' + levelNum + ')">\u{1F4D6} Study the words</button>' +
+      '<button class="btn btn-s" onclick="showHome()">← Back to levels</button>' +
+      '</div></div></div>';
+
+    $('#app').innerHTML = h;
+    scrollTop();
+  }
+
+  showWord();
+}
+
+/* ========== EVENT DELEGATION FOR SPEAK/SPELL ========== */
+document.addEventListener('click', function(e) {
+  var sp = e.target.closest('[data-speak]');
+  if (sp) { speak(sp.getAttribute('data-speak')); return; }
+  var sl = e.target.closest('[data-spell]');
+  if (sl) { spellOut(sl.getAttribute('data-spell')); return; }
+});
+
+/* ========== INIT ========== */
+state = loadState();
+showHome();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>
